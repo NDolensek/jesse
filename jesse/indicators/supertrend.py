@@ -4,7 +4,7 @@ import talib
 
 from collections import namedtuple
 
-SuperTrend = namedtuple('SuperTrend', ['trend', 'changed'])
+SuperTrend = namedtuple('SuperTrend', ['trend', 'changed', 'changeDirection'])
 
 def supertrend(candles: np.ndarray, period=10, factor=3, sequential=False) -> SuperTrend:
 
@@ -21,6 +21,7 @@ def supertrend(candles: np.ndarray, period=10, factor=3, sequential=False) -> Su
     lower_band = lower_basic
     super_trend = np.zeros(len(candles))
     changed = np.zeros(len(candles))
+    changeDirection = np.zeros(len(candles))
 
     # calculate the bands:
     # in an UPTREND, lower band does not decrease
@@ -61,18 +62,22 @@ def supertrend(candles: np.ndarray, period=10, factor=3, sequential=False) -> Su
             if candles[:, 2][i] <= currUpperBand:
                 super_trend[i] = currUpperBand  # remain in DOWNTREND
                 changed[i] = False
+                changeDirection[i] = 0
             else:
                 super_trend[i] = currLowerBand  # switch to UPTREND
                 changed[i] = True
+                changeDirection[i] = 1
         elif prevSuperTrend == prevLowerBand:  # if currently in UPTREND
             if candles[:, 2][i] >= currLowerBand:
                 super_trend[i] = currLowerBand  # remain in UPTREND
                 changed[i] = False
+                changeDirection[i] = 0
             else:
                 super_trend[i] = currUpperBand  # switch to DOWNTREND
                 changed[i] = True
+                changeDirection[i] = -1
 
     if sequential:
-        return SuperTrend(super_trend, changed)
+        return SuperTrend(super_trend, changed, changeDirection)
     else:
-        return SuperTrend(super_trend[-1], changed[-1])
+        return SuperTrend(super_trend[-1], changed[-1], changeDirection[-1])
